@@ -788,6 +788,9 @@
     <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js'></script>
 </head>
 <body>
+    <script>
+    fetch('http://localhost:3000/track-visit', { method: 'POST' });
+    </script>
     <div class="animated-bg"></div>
     <div class="particles">
         <div class="particle particle1"></div>
@@ -812,8 +815,8 @@
                 <option value="en">English</option>
             </select>
             <button class="mode-toggle" id="mode-toggle" title="Dark/Light Mode umschalten"><i class="fas fa-moon"></i></button>
-            <button class="login-btn" onclick="window.location.href='https://q7ytx0.github.io/stundenplan-/'">Login</button>
-        </div>
+        <button class="login-btn" onclick="window.location.href='https://q7ytx0.github.io/stundenplan-/'">Login</button>
+    </div>
     </nav>
     <section class="hero">
         <div class="hero-title">Zyro</div>
