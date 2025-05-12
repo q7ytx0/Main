@@ -81,9 +81,11 @@
             background: rgba(24,26,32,0.95);
             padding: 0 48px;
             height: 68px;
-            box-shadow: 0 2px 16px #0002;
+            box-shadow: 0 2px 16px rgba(0,0,0,0.1);
             position: fixed;
-            top: 0; left: 0; width: 100vw;
+            top: 0;
+            left: 0;
+            width: 100%;
             z-index: 20;
         }
         .navbar-logo {
@@ -91,47 +93,78 @@
             font-weight: 900;
             color: var(--accent);
             letter-spacing: -1px;
-        }
-        .navbar-links-center {
-            display: flex;
-            align-items: center;
-            gap: 32px;
-            margin: 0 auto;
-            position: absolute;
-            left: 50%;
-            transform: translateX(-50%);
-        }
-        .navbar-link {
-            color: var(--text-muted);
-            text-decoration: none;
-            font-size: 1.1rem;
-            font-weight: 500;
+            cursor: pointer;
+            padding: 10px;
             transition: color 0.2s;
-            position: relative;
-            padding: 0 6px;
+            user-select: none;
         }
-        .navbar-link:hover, .navbar-link.active {
+        .navbar-logo:hover {
             color: var(--primary);
         }
-        .navbar-link.active::after {
-            content: '';
-            display: block;
-            height: 2.5px;
-            width: 100%;
-            background: var(--primary);
-            border-radius: 2px;
-            margin-top: 2px;
-            animation: underline 0.3s;
+        .dropdown-menu {
+            position: absolute;
+            top: 70px;
+            left: 0;
+            background: var(--bg-light);
+            border: 1px solid var(--card-border);
+            border-radius: 8px;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.15);
+            padding: 8px 0;
+            min-width: 200px;
+            display: none;
+            z-index: 1000;
+            animation: slideDown 0.2s ease-out;
         }
-        @keyframes underline {
-            from { width: 0; }
-            to { width: 100%; }
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        .dropdown-menu.show {
+            display: block;
+        }
+        .dropdown-item {
+            display: block;
+            padding: 12px 20px;
+            color: var(--text);
+            text-decoration: none;
+            transition: background 0.2s, color 0.2s;
+            font-size: 1rem;
+            font-weight: 500;
+        }
+        .dropdown-item:hover {
+            background: var(--primary);
+            color: white;
+        }
+        .dropdown-divider {
+            height: 1px;
+            background: var(--card-border);
+            margin: 8px 0;
+        }
+        .dropdown-language {
+            width: calc(100% - 40px);
+            margin: 8px 20px;
+            padding: 8px;
+            border-radius: 6px;
+            border: 1px solid var(--card-border);
+            background: var(--bg);
+            color: var(--text);
+            font-size: 0.9rem;
+            cursor: pointer;
+        }
+        .navbar-links-center {
+            display: none; /* Verstecke die zentrale Navigation */
         }
         .navbar-cta {
             display: flex;
             align-items: center;
-            margin-left: 18px;
-            z-index: 2;
+            gap: 16px;
+            margin-left: auto;
         }
         .lang-switch, .mode-toggle {
             margin-right: 0;
@@ -559,22 +592,24 @@
             border: 1px solid var(--card-border);
             border-radius: 6px;
             font-size: 1rem;
-            margin-right: 12px;
-            padding: 6px 10px;
+            padding: 8px 12px;
+            margin-left: 16px;
+            cursor: pointer;
         }
         .mode-toggle {
             background: var(--bg-light);
             color: var(--accent);
             border: none;
             border-radius: 50%;
-            width: 38px; height: 38px;
+            width: 38px;
+            height: 38px;
             font-size: 1.2rem;
-            margin-right: 12px;
             cursor: pointer;
             transition: background 0.2s, color 0.2s, transform 0.2s;
             display: inline-flex;
             align-items: center;
             justify-content: center;
+            margin-left: 8px;
         }
         .mode-toggle:hover { background: var(--primary); color: #fff; transform: scale(1.1); }
         .newsletter-form {
@@ -978,8 +1013,351 @@
     <!-- Kalenderintegration (FullCalendar CDN) -->
     <link href='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css' rel='stylesheet' />
     <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js'></script>
+    <!-- Performance Optimierungen -->
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    
+    <!-- Zusätzliche Styles -->
+    <style>
+        /* Ladeindikator */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+        
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 3px solid var(--accent);
+            border-radius: 50%;
+            border-top-color: transparent;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Toast Benachrichtigungen */
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+        }
+
+        .toast {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 8px;
+            padding: 12px 20px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            animation: slideIn 0.3s ease-out;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        /* Verbesserte Mobile Navigation */
+        @media (max-width: 768px) {
+            .navbar {
+                padding: 0 15px;
+            }
+
+            .dropdown-menu {
+                width: 100%;
+                left: 0;
+                border-radius: 0;
+                top: 60px;
+                max-height: calc(100vh - 60px);
+                overflow-y: auto;
+            }
+
+            .navbar-cta {
+                gap: 8px;
+            }
+
+            .login-btn {
+                padding: 8px 16px;
+                font-size: 0.9rem;
+            }
+        }
+
+        /* Blog Sektion */
+        .blog-section {
+            padding: 80px 0;
+            background: var(--bg);
+        }
+
+        .blog-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            padding: 0 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .blog-card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            overflow: hidden;
+            transition: transform 0.3s;
+        }
+
+        .blog-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .blog-image {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+        }
+
+        .blog-content {
+            padding: 20px;
+        }
+
+        .blog-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: var(--accent);
+        }
+
+        .blog-excerpt {
+            color: var(--text-muted);
+            margin-bottom: 15px;
+        }
+
+        .blog-meta {
+            display: flex;
+            justify-content: space-between;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        /* Echtzeit-Benachrichtigungen */
+        .notification-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: #ef4444;
+            color: white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: pulse 2s infinite;
+        }
+
+        /* Lazy Loading */
+        .lazy-load {
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .lazy-load.loaded {
+            opacity: 1;
+        }
+
+        /* Social Media Feed */
+        .social-feed {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            padding: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .social-post {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 15px;
+            transition: transform 0.3s;
+        }
+
+        .social-post:hover {
+            transform: scale(1.02);
+        }
+
+        .social-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .social-platform-icon {
+            font-size: 1.2rem;
+            color: var(--accent);
+        }
+
+        .social-content {
+            margin-bottom: 10px;
+        }
+
+        .social-actions {
+            display: flex;
+            gap: 15px;
+            color: var(--text-muted);
+        }
+
+        /* Formularvalidierung */
+        .form-group {
+            position: relative;
+            margin-bottom: 20px;
+        }
+
+        .form-error {
+            color: #ef4444;
+            font-size: 0.9rem;
+            position: absolute;
+            bottom: -20px;
+            left: 0;
+        }
+
+        input:invalid, textarea:invalid {
+            border-color: #ef4444;
+        }
+
+        /* Verbessertes Dropdown */
+        .dropdown-menu {
+            transform-origin: top;
+            transform: scaleY(0);
+            transition: transform 0.2s ease-out;
+        }
+
+        .dropdown-menu.show {
+            transform: scaleY(1);
+        }
+
+        .dropdown-item {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .dropdown-item::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: var(--primary);
+            transform: translateX(-100%);
+            transition: transform 0.2s;
+        }
+
+        .dropdown-item:hover::after {
+            transform: translateX(0);
+        }
+    </style>
+
+    <style>
+        /* Moderne Sektionsüberschriften */
+        .section-header {
+            text-align: center;
+            margin-bottom: 50px;
+            position: relative;
+            padding-bottom: 20px;
+        }
+
+        .section-title {
+            font-size: 2.5rem;
+            font-weight: 800;
+            background: linear-gradient(120deg, var(--primary) 0%, var(--accent) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 15px;
+            letter-spacing: -1px;
+            text-transform: uppercase;
+        }
+
+        .section-subtitle {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+            max-width: 600px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        .section-header::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 60px;
+            height: 3px;
+            background: linear-gradient(90deg, var(--primary) 0%, var(--accent) 100%);
+            border-radius: 2px;
+        }
+
+        /* Anpassungen für die spezifischen Sektionen */
+        .blog-section, .social-feed-section {
+            padding: 100px 0;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .blog-section::before, .social-feed-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(120deg, var(--primary) 0%, var(--accent) 100%);
+            opacity: 0.03;
+            z-index: 0;
+        }
+
+        .blog-grid, .social-feed {
+            position: relative;
+            z-index: 1;
+        }
+
+        @media (max-width: 768px) {
+            .section-title {
+                font-size: 2rem;
+            }
+            
+            .section-subtitle {
+                font-size: 1rem;
+                padding: 0 20px;
+            }
+        }
+    </style>
 </head>
 <body>
+    <!-- Ladeindikator -->
+    <div class="loading-overlay">
+        <div class="loading-spinner"></div>
+    </div>
+
+    <!-- Toast Container -->
+    <div class="toast-container"></div>
+
     <script>
     // Funktion zum Löschen aller Accounts
     function clearAllAccounts() {
@@ -1475,24 +1853,67 @@
         <div class="particle particle5"></div>
     </div>
     <nav class="navbar">
-        <div class="navbar-logo">Zyro</div>
-        <div class="navbar-links-center">
-            <a href="#" class="navbar-link active">Home</a>
-            <a href="#features" class="navbar-link">Funktionen</a>
-            <a href="#pricing" class="navbar-link">Preise</a>
-            <a href="#faq" class="navbar-link">FAQ</a>
-            <a href="#contact" class="navbar-link">Kontakt</a>
-            <a href="#socialmedia" class="navbar-link">Social Media</a>
-        </div>
-        <div class="navbar-cta">
-            <select id="lang-switch" class="lang-switch" aria-label="Sprache wählen">
+        <div class="navbar-logo" onclick="toggleDropdownMenu()">Zyro</div>
+        <div class="dropdown-menu" id="dropdownMenu">
+            <a href="#" class="dropdown-item" data-lang-key="home">Home</a>
+            <a href="#features" class="dropdown-item" data-lang-key="features">Funktionen</a>
+            <a href="#pricing" class="dropdown-item" data-lang-key="pricing">Preise</a>
+            <a href="#faq" class="dropdown-item" data-lang-key="faq">FAQ</a>
+            <a href="#contact" class="dropdown-item" data-lang-key="contact">Kontakt</a>
+            <a href="#socialmedia" class="dropdown-item" data-lang-key="socialMedia">Social Media</a>
+            <a href="#kalender" class="dropdown-item" data-lang-key="calendar">Schulkalender</a>
+            <a href="#testimonials" class="dropdown-item" data-lang-key="testimonials">Stimmen unserer Nutzer</a>
+            <div class="dropdown-divider"></div>
+            <select class="dropdown-language">
                 <option value="de">Deutsch</option>
                 <option value="en">English</option>
             </select>
-            <button class="mode-toggle" id="mode-toggle" title="Dark/Light Mode umschalten"><i class="fas fa-moon"></i></button>
-        <button class="login-btn" onclick="window.location.href='https://q7ytx0.github.io/stundenplan-/'">Login</button>
-    </div>
+        </div>
+        <div class="navbar-cta">
+            <button class="mode-toggle" id="mode-toggle" title="Dark/Light Mode umschalten">
+                <i class="fas fa-moon"></i>
+            </button>
+            <button class="login-btn" onclick="window.location.href='https://q7ytx0.github.io/stundenplan-/'">Login</button>
+        </div>
     </nav>
+    <style>
+    /* Anpassung der Dropdown-Menü-Höhe für die zusätzlichen Einträge */
+    .dropdown-menu {
+        max-height: calc(100vh - 100px);
+        overflow-y: auto;
+        scrollbar-width: thin;
+        scrollbar-color: var(--primary) var(--bg-light);
+    }
+
+    .dropdown-menu::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .dropdown-menu::-webkit-scrollbar-track {
+        background: var(--bg-light);
+    }
+
+    .dropdown-menu::-webkit-scrollbar-thumb {
+        background-color: var(--primary);
+        border-radius: 3px;
+    }
+
+    /* Verbesserter Hover-Effekt für die neuen Menüpunkte */
+    .dropdown-item {
+        position: relative;
+        overflow: hidden;
+    }
+
+    .dropdown-item:hover::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 0;
+        height: 100%;
+        width: 4px;
+        background: var(--accent);
+    }
+    </style>
     <section class="hero">
         <div class="hero-title">Zyro</div>
         <div class="hero-sub">Das moderne Schulverwaltungssystem</div>
@@ -1511,18 +1932,66 @@
         <div class="features-title">Was kann Zyro?</div>
         <div id="accounts-container" class="accounts-grid"></div>
         <div class="features-grid">
-            <div class="feature-card"><div class="feature-icon">📅</div><div class="feature-title">Intuitiver Stundenplan</div><div class="feature-desc">Behalte deinen Stundenplan immer im Blick – übersichtlich, farblich sortiert und jederzeit aktuell.</div></div>
-            <div class="feature-card"><div class="feature-icon">📝</div><div class="feature-title">Notenverwaltung</div><div class="feature-desc">Alle Noten auf einen Blick, Durchschnittsberechnung und übersichtliche Darstellung deiner Leistungen.</div></div>
-            <div class="feature-card"><div class="feature-icon">💬</div><div class="feature-title">Einfache Kommunikation</div><div class="feature-desc">Direkte Nachrichten an Lehrer, Mitschüler oder die Schulleitung – schnell und sicher.</div></div>
-            <div class="feature-card"><div class="feature-icon">🔔</div><div class="feature-title">Benachrichtigungen</div><div class="feature-desc">Wichtige Infos wie Stundenplanänderungen, neue Noten oder Nachrichten sofort erhalten.</div></div>
-            <div class="feature-card"><div class="feature-icon">🔒</div><div class="feature-title">Sicherheit & Datenschutz</div><div class="feature-desc">Deine Daten sind geschützt und werden nicht an Dritte weitergegeben. Zwei-Faktor-Authentifizierung möglich.</div></div>
-            <div class="feature-card"><div class="feature-icon">⚙️</div><div class="feature-title">Individuelle Einstellungen</div><div class="feature-desc">Passe Darstellung, Benachrichtigungen und Sicherheit nach deinen Wünschen an.</div></div>
-            <div class="feature-card"><div class="feature-icon">🍽️</div><div class="feature-title">Mensa & Essensplan</div><div class="feature-desc">Sieh dir den aktuellen Speiseplan an, bestelle Essen vor und verwalte deine Mensa-Buchungen digital.</div></div>
-            <div class="feature-card"><div class="feature-icon">📱</div><div class="feature-title">Mobile Nutzung</div><div class="feature-desc">Zyro ist für alle Geräte optimiert – egal ob Smartphone, Tablet oder PC.</div></div>
-            <div class="feature-card"><div class="feature-icon">👨‍👩‍👧‍👦</div><div class="feature-title">Elternzugang</div><div class="feature-desc">Eltern können den Lernfortschritt ihrer Kinder einsehen und mit Lehrern kommunizieren.</div></div>
-            <div class="feature-card"><div class="feature-icon">🔄</div><div class="feature-title">Vertretungsplan</div><div class="feature-desc">Immer informiert über Vertretungen, Ausfälle und Änderungen im Stundenplan.</div></div>
-            <div class="feature-card"><div class="feature-icon">🌐</div><div class="feature-title">Social Media & News</div><div class="feature-desc">Bleibe über Neuigkeiten, Events und Social Media Kanäle deiner Schule auf dem Laufenden.</div></div>
-            <div class="feature-card"><div class="feature-icon">🆘</div><div class="feature-title">Support & Hilfe</div><div class="feature-desc">Schneller Support bei Fragen oder Problemen – direkt über die Plattform erreichbar.</div></div>
+            <div class="feature-card" data-feature-key="timetable">
+                <div class="feature-icon">📅</div>
+                <div class="feature-title">Intuitiver Stundenplan</div>
+                <div class="feature-desc">Behalte deinen Stundenplan immer im Blick – übersichtlich, farblich sortiert und jederzeit aktuell.</div>
+            </div>
+            <div class="feature-card" data-feature-key="grades">
+                <div class="feature-icon">📝</div>
+                <div class="feature-title">Notenverwaltung</div>
+                <div class="feature-desc">Alle Noten auf einen Blick, Durchschnittsberechnung und übersichtliche Darstellung deiner Leistungen.</div>
+            </div>
+            <div class="feature-card" data-feature-key="communication">
+                <div class="feature-icon">💬</div>
+                <div class="feature-title">Einfache Kommunikation</div>
+                <div class="feature-desc">Direkte Nachrichten an Lehrer, Mitschüler oder die Schulleitung – schnell und sicher.</div>
+            </div>
+            <div class="feature-card" data-feature-key="notifications">
+                <div class="feature-icon">🔔</div>
+                <div class="feature-title">Benachrichtigungen</div>
+                <div class="feature-desc">Wichtige Infos wie Stundenplanänderungen, neue Noten oder Nachrichten sofort erhalten.</div>
+            </div>
+            <div class="feature-card" data-feature-key="security">
+                <div class="feature-icon">🔒</div>
+                <div class="feature-title">Sicherheit & Datenschutz</div>
+                <div class="feature-desc">Deine Daten sind geschützt und werden nicht an Dritte weitergegeben. Zwei-Faktor-Authentifizierung möglich.</div>
+            </div>
+            <div class="feature-card" data-feature-key="settings">
+                <div class="feature-icon">⚙️</div>
+                <div class="feature-title">Individuelle Einstellungen</div>
+                <div class="feature-desc">Passe Darstellung, Benachrichtigungen und Sicherheit nach deinen Wünschen an.</div>
+            </div>
+            <div class="feature-card" data-feature-key="cafeteria">
+                <div class="feature-icon">🍽️</div>
+                <div class="feature-title">Mensa & Essensplan</div>
+                <div class="feature-desc">Sieh dir den aktuellen Speiseplan an, bestelle Essen vor und verwalte deine Mensa-Buchungen digital.</div>
+            </div>
+            <div class="feature-card" data-feature-key="mobile">
+                <div class="feature-icon">📱</div>
+                <div class="feature-title">Mobile Nutzung</div>
+                <div class="feature-desc">Zyro ist für alle Geräte optimiert – egal ob Smartphone, Tablet oder PC.</div>
+            </div>
+            <div class="feature-card" data-feature-key="parents">
+                <div class="feature-icon">👨‍👩‍👧‍👦</div>
+                <div class="feature-title">Elternzugang</div>
+                <div class="feature-desc">Eltern können den Lernfortschritt ihrer Kinder einsehen und mit Lehrern kommunizieren.</div>
+            </div>
+            <div class="feature-card" data-feature-key="substitutions">
+                <div class="feature-icon">🔄</div>
+                <div class="feature-title">Vertretungsplan</div>
+                <div class="feature-desc">Immer informiert über Vertretungen, Ausfälle und Änderungen im Stundenplan.</div>
+            </div>
+            <div class="feature-card" data-feature-key="social">
+                <div class="feature-icon">🌐</div>
+                <div class="feature-title">Social Media & News</div>
+                <div class="feature-desc">Bleibe über Neuigkeiten, Events und Social Media Kanäle deiner Schule auf dem Laufenden.</div>
+            </div>
+            <div class="feature-card" data-feature-key="support">
+                <div class="feature-icon">🆘</div>
+                <div class="feature-title">Support & Hilfe</div>
+                <div class="feature-desc">Schneller Support bei Fragen oder Problemen – direkt über die Plattform erreichbar.</div>
+            </div>
         </div>
     </section>
     <section class="pricing-section" id="pricing">
@@ -1874,72 +2343,112 @@
         }
     });
     </script>
-    <!-- Testimonials-Bereich -->
-    <section class="testimonials-section">
+    <!-- Testimonials-Sektion mit korrekter ID -->
+    <section class="testimonials-section" id="testimonials">
         <div class="testimonials-title"><i class="fas fa-quote-left"></i> Stimmen unserer Nutzer</div>
         <div class="testimonials-grid">
-            <div class="testimonial-card">
-                <div class="testimonial-text">„Zyro macht meinen Schulalltag viel einfacher und übersichtlicher!“</div>
+            <div class="testimonial-card" data-testimonial-key="student">
+                <div class="testimonial-text">„Zyro macht meinen Schulalltag viel einfacher und übersichtlicher!"</div>
                 <div class="testimonial-user"><i class="fas fa-user-graduate"></i> Leon, Schüler</div>
             </div>
-            <div class="testimonial-card">
-                <div class="testimonial-text">„Endlich ein System, das auch für Eltern verständlich ist.“</div>
+            <div class="testimonial-card" data-testimonial-key="parent">
+                <div class="testimonial-text">„Endlich ein System, das auch für Eltern verständlich ist."</div>
                 <div class="testimonial-user"><i class="fas fa-user"></i> Frau Müller, Mutter</div>
             </div>
-            <div class="testimonial-card">
-                <div class="testimonial-text">„Die Kalenderfunktion und der Support sind top!“</div>
+            <div class="testimonial-card" data-testimonial-key="teacher">
+                <div class="testimonial-text">„Die Kalenderfunktion und der Support sind top!"</div>
                 <div class="testimonial-user"><i class="fas fa-chalkboard-teacher"></i> Herr Weber, Lehrer</div>
             </div>
         </div>
     </section>
+
+    <script>
+    // Verbesserte Scroll-Funktionalität für die Navigation
+    document.querySelectorAll('.dropdown-item').forEach(item => {
+        item.addEventListener('click', (e) => {
+            const targetId = item.getAttribute('href').substring(1);
+            const targetElement = document.getElementById(targetId);
+            
+            if (targetElement) {
+                e.preventDefault();
+                // Schließe das Dropdown-Menü
+                document.getElementById('dropdownMenu').classList.remove('show');
+                
+                // Scroll mit Offset für die Navbar-Höhe
+                const navbarHeight = document.querySelector('.navbar').offsetHeight;
+                const targetPosition = targetElement.offsetTop - navbarHeight - 20;
+                
+                window.scrollTo({
+                    top: targetPosition,
+                    behavior: 'smooth'
+                });
+            }
+        });
+    });
+    </script>
+
     <style>
+    /* Zusätzliche Styles für bessere Sichtbarkeit der Sektion */
     .testimonials-section {
-        background: var(--bg);
-        padding: 60px 0 60px 0;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
+        scroll-margin-top: 100px; /* Zusätzlicher Scroll-Margin für bessere Positionierung */
+        padding-top: 80px;
+        padding-bottom: 60px;
     }
+
     .testimonials-title {
-        font-size: 2rem;
-        color: var(--accent);
-        margin-bottom: 32px;
+        font-size: 2.2rem;
         font-weight: 700;
+        color: var(--accent);
+        margin-bottom: 40px;
+        text-align: center;
         display: flex;
         align-items: center;
+        justify-content: center;
         gap: 12px;
     }
+
     .testimonials-grid {
         display: flex;
-        gap: 32px;
         flex-wrap: wrap;
         justify-content: center;
+        gap: 32px;
+        padding: 0 20px;
+        max-width: 1200px;
+        margin: 0 auto;
     }
+
     .testimonial-card {
         background: var(--card-bg);
-        border: 1.5px solid var(--card-border);
-        border-radius: 16px;
-        box-shadow: var(--card-glow);
-        padding: 32px 24px 24px 24px;
-        min-width: 260px;
-        max-width: 320px;
-        color: var(--text);
-        font-size: 1.1rem;
-        margin-bottom: 12px;
-        transition: transform 0.18s, box-shadow 0.18s;
-        animation: fadeInUp 1s;
+        border: 1px solid var(--card-border);
+        border-radius: 12px;
+        padding: 24px;
+        width: 100%;
+        max-width: 350px;
+        transition: transform 0.3s, box-shadow 0.3s;
     }
+
     .testimonial-card:hover {
-        box-shadow: 0 0 32px 0 #3b82f6cc;
-        transform: scale(1.04) rotate(-1deg);
+        transform: translateY(-5px);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
     }
+
+    .testimonial-text {
+        font-size: 1.1rem;
+        color: var(--text);
+        margin-bottom: 20px;
+        line-height: 1.6;
+    }
+
     .testimonial-user {
-        margin-top: 18px;
-        color: var(--primary);
-        font-size: 1rem;
         display: flex;
         align-items: center;
-        gap: 8px;
+        gap: 10px;
+        color: var(--primary);
+        font-weight: 500;
+    }
+
+    .testimonial-user i {
+        font-size: 1.2rem;
     }
     </style>
     <!-- Parallax-Scrolling & mehr Animationen -->
@@ -1963,6 +2472,662 @@
             parallaxBg.style.transform = `translateY(${window.scrollY * 0.2}px)`;
         }
     });
+    </script>
+    <script>
+    // Dropdown-Menü Funktionalität
+    function toggleDropdownMenu() {
+        const dropdownMenu = document.getElementById('dropdownMenu');
+        dropdownMenu.classList.toggle('show');
+        
+        // Klick außerhalb schließt das Menü
+        if (dropdownMenu.classList.contains('show')) {
+            document.addEventListener('click', closeDropdownOnClickOutside);
+        } else {
+            document.removeEventListener('click', closeDropdownOnClickOutside);
+        }
+    }
+
+    function closeDropdownOnClickOutside(event) {
+        const dropdownMenu = document.getElementById('dropdownMenu');
+        const navbarLogo = document.querySelector('.navbar-logo');
+        
+        if (!dropdownMenu.contains(event.target) && !navbarLogo.contains(event.target)) {
+            dropdownMenu.classList.remove('show');
+            document.removeEventListener('click', closeDropdownOnClickOutside);
+        }
+    }
+
+    // Schließe das Menü wenn ein Menüpunkt geklickt wird
+    document.querySelectorAll('.dropdown-item').forEach(item => {
+        item.addEventListener('click', () => {
+            document.getElementById('dropdownMenu').classList.remove('show');
+        });
+    });
+    </script>
+    <script>
+    // Übersetzungen
+    const translations = {
+        de: {
+            ui: {
+                heroTitle: "Das moderne Schulverwaltungssystem",
+                ctaTitle: "Starte jetzt mit Zyro!",
+                ctaDesc: "Teste alle Funktionen kostenlos und überzeuge dich selbst von der modernen Schulverwaltung.",
+                newsletterPlaceholder: "Deine E-Mail für den Newsletter",
+                subscribe: "Anmelden",
+                tryFree: "Jetzt kostenlos testen",
+                footerText: "Das moderne Schulverwaltungssystem",
+                searchFaq: "Suche in den FAQ...",
+                contactTitle: "Kontakt",
+                contactName: "Dein Name",
+                contactEmail: "Deine E-Mail",
+                contactMessage: "Deine Nachricht",
+                sendMessage: "Nachricht senden",
+                calendarTitle: "Schulkalender",
+                testimonialTitle: "Stimmen unserer Nutzer"
+            },
+            home: "Home",
+            features: "Funktionen",
+            pricing: "Preise",
+            faq: "FAQ",
+            contact: "Kontakt",
+            socialMedia: "Social Media",
+            calendar: "Schulkalender",
+            testimonials: "Stimmen unserer Nutzer",
+            featuresSection: {
+                timetable: {
+                    title: "Intuitiver Stundenplan",
+                    desc: "Behalte deinen Stundenplan immer im Blick – übersichtlich, farblich sortiert und jederzeit aktuell."
+                },
+                grades: {
+                    title: "Notenverwaltung",
+                    desc: "Alle Noten auf einen Blick, Durchschnittsberechnung und übersichtliche Darstellung deiner Leistungen."
+                },
+                communication: {
+                    title: "Einfache Kommunikation",
+                    desc: "Direkte Nachrichten an Lehrer, Mitschüler oder die Schulleitung – schnell und sicher."
+                },
+                notifications: {
+                    title: "Benachrichtigungen",
+                    desc: "Wichtige Infos wie Stundenplanänderungen, neue Noten oder Nachrichten sofort erhalten."
+                },
+                security: {
+                    title: "Sicherheit & Datenschutz",
+                    desc: "Deine Daten sind geschützt und werden nicht an Dritte weitergegeben."
+                },
+                settings: {
+                    title: "Individuelle Einstellungen",
+                    desc: "Passe Darstellung, Benachrichtigungen und Sicherheit nach deinen Wünschen an."
+                },
+                cafeteria: {
+                    title: "Mensa & Essensplan",
+                    desc: "Sieh dir den aktuellen Speiseplan an, bestelle Essen vor und verwalte deine Mensa-Buchungen digital."
+                },
+                mobile: {
+                    title: "Mobile Nutzung",
+                    desc: "Zyro ist für alle Geräte optimiert – egal ob Smartphone, Tablet oder PC."
+                },
+                parents: {
+                    title: "Elternzugang",
+                    desc: "Eltern können den Lernfortschritt ihrer Kinder einsehen und mit Lehrern kommunizieren."
+                },
+                substitutions: {
+                    title: "Vertretungsplan",
+                    desc: "Immer informiert über Vertretungen, Ausfälle und Änderungen im Stundenplan."
+                },
+                social: {
+                    title: "Social Media & News",
+                    desc: "Bleibe über Neuigkeiten, Events und Social Media Kanäle deiner Schule auf dem Laufenden."
+                },
+                support: {
+                    title: "Support & Hilfe",
+                    desc: "Schneller Support bei Fragen oder Problemen – direkt über die Plattform erreichbar."
+                }
+            },
+            pricing: {
+                student: {
+                    title: "Für Schüler, Eltern & Lehrer",
+                    price: "0€",
+                    desc: "Zyro ist für Einzelpersonen komplett kostenlos. Keine versteckten Kosten, keine Werbung."
+                },
+                school: {
+                    title: "Für Schulen",
+                    price: "Individuell",
+                    desc: "Für Schulen gibt es keine festen Preise. Bitte kontaktieren Sie uns für individuelle Vereinbarungen."
+                }
+            },
+            faq: {
+                search: "Suche in den FAQ...",
+                questions: {
+                    free: {
+                        q: "Ist Zyro wirklich kostenlos?",
+                        a: "Ja, die Basisversion ist dauerhaft kostenlos nutzbar. Es gibt keine versteckten Kosten."
+                    },
+                    mobile: {
+                        q: "Kann ich Zyro auf dem Handy nutzen?",
+                        a: "Ja, Zyro ist für alle Geräte optimiert – egal ob Smartphone, Tablet oder PC."
+                    },
+                    security: {
+                        q: "Wie sicher sind meine Daten?",
+                        a: "Deine Daten werden verschlüsselt gespeichert und nicht an Dritte weitergegeben. Es gibt Zwei-Faktor-Authentifizierung."
+                    },
+                    support: {
+                        q: "Wie kann ich den Support erreichen?",
+                        a: "Du kannst uns direkt über das Kontaktformular oder per E-Mail erreichen. Wir antworten schnellstmöglich."
+                    },
+                    app: {
+                        q: "Gibt es eine App?",
+                        a: "Eine App ist in Planung, aber die Webversion funktioniert bereits perfekt auf allen Geräten."
+                    }
+                }
+            }
+        },
+        en: {
+            ui: {
+                heroTitle: "The Modern School Management System",
+                ctaTitle: "Start with Zyro now!",
+                ctaDesc: "Test all features for free and experience modern school management yourself.",
+                newsletterPlaceholder: "Your email for the newsletter",
+                subscribe: "Subscribe",
+                tryFree: "Try for free now",
+                footerText: "The Modern School Management System",
+                searchFaq: "Search FAQ...",
+                contactTitle: "Contact",
+                contactName: "Your Name",
+                contactEmail: "Your Email",
+                contactMessage: "Your Message",
+                sendMessage: "Send Message",
+                calendarTitle: "School Calendar",
+                testimonialTitle: "User Testimonials"
+            },
+            home: "Home",
+            features: "Features",
+            pricing: "Pricing",
+            faq: "FAQ",
+            contact: "Contact",
+            socialMedia: "Social Media",
+            calendar: "School Calendar",
+            testimonials: "User Testimonials",
+            featuresSection: {
+                timetable: {
+                    title: "Intuitive Timetable",
+                    desc: "Keep track of your schedule - clear, color-coded, and always up-to-date."
+                },
+                grades: {
+                    title: "Grade Management",
+                    desc: "All grades at a glance, average calculation, and clear presentation of your performance."
+                },
+                communication: {
+                    title: "Easy Communication",
+                    desc: "Direct messages to teachers, classmates, or school administration - quick and secure."
+                },
+                notifications: {
+                    title: "Notifications",
+                    desc: "Receive important information like schedule changes, new grades, or messages immediately."
+                },
+                security: {
+                    title: "Security & Privacy",
+                    desc: "Your data is stored encrypted and not shared with third parties."
+                },
+                settings: {
+                    title: "Individual Settings",
+                    desc: "Customize display, notifications, and security according to your preferences."
+                },
+                cafeteria: {
+                    title: "Cafeteria & Meal Plan",
+                    desc: "View the current menu, pre-order meals, and manage your cafeteria bookings digitally."
+                },
+                mobile: {
+                    title: "Mobile Usage",
+                    desc: "Zyro is optimized for all devices - whether smartphone, tablet, or PC."
+                },
+                parents: {
+                    title: "Parent Access",
+                    desc: "Parents can view their children's learning progress and communicate with teachers."
+                },
+                substitutions: {
+                    title: "Substitution Schedule",
+                    desc: "Always informed about substitutions, cancellations, and changes in the timetable."
+                },
+                social: {
+                    title: "Social Media & News",
+                    desc: "Stay updated on news, events, and social media channels of your school."
+                },
+                support: {
+                    title: "Support & Help",
+                    desc: "Quick support for questions or problems - directly accessible through the platform."
+                }
+            },
+            pricing: {
+                student: {
+                    title: "For Students, Parents & Teachers",
+                    price: "€0",
+                    desc: "Zyro is completely free for individuals. No hidden costs, no ads."
+                },
+                school: {
+                    title: "For Schools",
+                    price: "Individual",
+                    desc: "There are no fixed prices for schools. Please contact us for individual arrangements."
+                }
+            },
+            faq: {
+                search: "Search FAQ...",
+                questions: {
+                    free: {
+                        q: "Is Zyro really free?",
+                        a: "Yes, the basic version is permanently free to use. There are no hidden costs."
+                    },
+                    mobile: {
+                        q: "Can I use Zyro on my phone?",
+                        a: "Yes, Zyro is optimized for all devices - whether smartphone, tablet, or PC."
+                    },
+                    security: {
+                        q: "How secure is my data?",
+                        a: "Your data is stored encrypted and not shared with third parties. Two-factor authentication is available."
+                    },
+                    support: {
+                        q: "How can I reach support?",
+                        a: "You can reach us directly through the contact form or via email. We'll respond as quickly as possible."
+                    },
+                    app: {
+                        q: "Is there an app?",
+                        a: "An app is planned, but the web version already works perfectly on all devices."
+                    }
+                }
+            }
+        }
+    };
+
+    // Aktuelle Sprache
+    let currentLang = 'de';
+
+    // Funktion zum Ändern der Sprache
+    function changeLanguage(lang) {
+        if (!translations[lang]) return;
+        
+        const texts = translations[lang];
+
+        // UI-Elemente aktualisieren
+        if (texts.ui) {
+            document.querySelector('.hero-sub').textContent = texts.ui.heroTitle;
+            document.querySelector('.cta-title').textContent = texts.ui.ctaTitle;
+            document.querySelector('.cta-desc').textContent = texts.ui.ctaDesc;
+            document.querySelector('.newsletter-form input').placeholder = texts.ui.newsletterPlaceholder;
+            document.querySelector('.newsletter-form button').innerHTML = 
+                `<i class="fas fa-paper-plane"></i> ${texts.ui.subscribe}`;
+            document.querySelector('.cta-btn').textContent = texts.ui.tryFree;
+            document.querySelector('.sticky-footer span').textContent = 
+                `Zyro – ${texts.ui.footerText}`;
+            
+            // Kontaktformular aktualisieren
+            document.querySelector('.contact-title').textContent = texts.ui.contactTitle;
+            const contactInputs = document.querySelectorAll('.contact-form input, .contact-form textarea');
+            contactInputs[0].placeholder = texts.ui.contactName;
+            contactInputs[1].placeholder = texts.ui.contactEmail;
+            contactInputs[2].placeholder = texts.ui.contactMessage;
+            document.querySelector('.contact-form button').textContent = texts.ui.sendMessage;
+
+            // FAQ-Suche aktualisieren
+            document.querySelector('.faq-search').placeholder = texts.ui.searchFaq;
+
+            // Kalender-Titel aktualisieren
+            document.querySelector('.calendar-title').textContent = texts.ui.calendarTitle;
+
+            // Testimonials-Titel aktualisieren
+            document.querySelector('.testimonials-title').textContent = texts.ui.testimonialTitle;
+        }
+
+        // Navigation Items aktualisieren
+        document.querySelectorAll('[data-lang-key]').forEach(element => {
+            const key = element.getAttribute('data-lang-key');
+            if (texts[key]) {
+                element.textContent = texts[key];
+            }
+        });
+
+        // Feature Cards aktualisieren
+        document.querySelectorAll('.feature-card').forEach(card => {
+            const key = card.getAttribute('data-feature-key');
+            if (key && texts.featuresSection && texts.featuresSection[key]) {
+                const feature = texts.featuresSection[key];
+                card.querySelector('.feature-title').textContent = feature.title;
+                card.querySelector('.feature-desc').textContent = feature.desc;
+            }
+        });
+
+        // Preise aktualisieren
+        const pricingTitle = document.querySelector('.pricing-title');
+        if (pricingTitle) {
+            pricingTitle.textContent = texts.pricing ? (lang === 'de' ? 'Preise & Tarife' : 'Pricing & Plans') : '';
+        }
+
+        document.querySelectorAll('.pricing-card').forEach((card, index) => {
+            const key = index === 0 ? 'student' : 'school';
+            if (texts.pricing && texts.pricing[key]) {
+                const pricing = texts.pricing[key];
+                card.querySelector('.pricing-name').textContent = pricing.title;
+                card.querySelector('.pricing-price').textContent = pricing.price;
+                card.querySelector('.pricing-features').textContent = pricing.desc;
+            }
+        });
+
+        // FAQ aktualisieren
+        const faqTitle = document.querySelector('.faq-title');
+        if (faqTitle) {
+            faqTitle.textContent = texts.faq ? (lang === 'de' ? 'Häufige Fragen (FAQ)' : 'Frequently Asked Questions (FAQ)') : '';
+        }
+
+        document.querySelectorAll('.faq-item').forEach((item, index) => {
+            const questions = texts.faq?.questions;
+            if (questions) {
+                const keys = ['free', 'mobile', 'security', 'support', 'app'];
+                const key = keys[index];
+                if (questions[key]) {
+                    item.querySelector('.faq-question').textContent = questions[key].q;
+                    item.querySelector('.faq-answer').textContent = questions[key].a;
+                }
+            }
+        });
+
+        // Testimonials aktualisieren
+        const testimonialTexts = {
+            de: [
+                { text: "„Zyro macht meinen Schulalltag viel einfacher und übersichtlicher!", author: "Leon, Schüler" },
+                { text: "„Endlich ein System, das auch für Eltern verständlich ist.", author: "Frau Müller, Mutter" },
+                { text: "„Die Kalenderfunktion und der Support sind top!", author: "Herr Weber, Lehrer" }
+            ],
+            en: [
+                { text: "Zyro makes my school day much easier and more organized!", author: "Leon, Student" },
+                { text: "Finally a system that parents can understand too.", author: "Mrs. Miller, Parent" },
+                { text: "The calendar function and support are excellent!", author: "Mr. Weber, Teacher" }
+            ]
+        };
+
+        document.querySelectorAll('.testimonial-card').forEach((card, index) => {
+            const testimonial = testimonialTexts[lang][index];
+            if (testimonial) {
+                card.querySelector('.testimonial-text').textContent = testimonial.text;
+                card.querySelector('.testimonial-user').textContent = testimonial.author;
+            }
+        });
+
+        // Sprache speichern
+        localStorage.setItem('preferredLanguage', lang);
+        
+        // Kalender-Lokalisierung
+        if (window.calendar) {
+            window.calendar.setOption('locale', lang);
+        }
+    }
+
+    // Event Listener für Sprachauswahl
+    document.addEventListener('DOMContentLoaded', function() {
+        const languageSelect = document.querySelector('.dropdown-language');
+        if (languageSelect) {
+            languageSelect.addEventListener('change', function(e) {
+                changeLanguage(e.target.value);
+            });
+
+            // Gespeicherte Sprache laden
+            const savedLang = localStorage.getItem('preferredLanguage');
+            if (savedLang) {
+                languageSelect.value = savedLang;
+                changeLanguage(savedLang);
+            }
+        }
+    });
+    </script>
+    <!-- Blog Sektion -->
+    <section class="blog-section" id="blog">
+        <div class="section-header">
+            <h2 class="section-title">Schulneuigkeiten</h2>
+            <p class="section-subtitle">Bleibe auf dem Laufenden über die neuesten Entwicklungen und Ereignisse an deiner Schule</p>
+        </div>
+        <div class="blog-grid">
+            <article class="blog-card lazy-load">
+                <img src="placeholder.jpg" data-src="blog1.jpg" alt="Blog Post 1" class="blog-image">
+                <div class="blog-content">
+                    <h3 class="blog-title">Neue Features in Zyro</h3>
+                    <p class="blog-excerpt">Entdecke die neuesten Funktionen und Verbesserungen in unserem Schulverwaltungssystem.</p>
+                    <div class="blog-meta">
+                        <span>12. März 2024</span>
+                        <span>5 Min. Lesezeit</span>
+                    </div>
+                </div>
+            </article>
+            <!-- Weitere Blog-Artikel hier -->
+        </div>
+    </section>
+
+    <!-- Social Media Feed -->
+    <section class="social-feed-section" id="social-feed">
+        <div class="section-header">
+            <h2 class="section-title">Social Media Updates</h2>
+            <p class="section-subtitle">Folge uns auf unseren Social-Media-Kanälen und bleibe mit der Schulgemeinschaft verbunden</p>
+        </div>
+        <div class="social-feed">
+            <div class="social-post lazy-load">
+                <div class="social-header">
+                    <i class="fab fa-tiktok social-platform-icon"></i>
+                    <span>@mathildeanneke</span>
+                </div>
+                <div class="social-content">
+                    <p>🎥 Checkt unsere neuesten TikToks aus! Von Schulalltag bis zu coolen Events - wir halten euch auf dem Laufenden! 🚀</p>
+                    <a href="https://www.tiktok.com/@mathildeanneke" target="_blank" class="social-link">
+                        <i class="fas fa-external-link-alt"></i> Zu unserem TikTok-Kanal
+                    </a>
+                </div>
+                <div class="social-actions">
+                    <span><i class="far fa-heart"></i> 110</span>
+                    <span><i class="far fa-comment"></i> 4</span>
+                    <span><i class="fas fa-bookmark"></i> 15</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <style>
+        /* Zusätzliche Styles für den Social Media Feed */
+        .social-content {
+            font-size: 1.1rem;
+            line-height: 1.6;
+            margin: 15px 0;
+        }
+
+        .social-link {
+            display: inline-block;
+            margin-top: 12px;
+            padding: 10px 20px;
+            background: linear-gradient(90deg, var(--primary) 0%, var(--accent) 100%);
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .social-link:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(59,130,246,0.3);
+        }
+
+        .social-link i {
+            margin-right: 8px;
+        }
+
+        .social-platform-icon {
+            font-size: 1.5rem;
+            background: linear-gradient(120deg, var(--primary) 0%, var(--accent) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .social-header span {
+            font-weight: 600;
+            font-size: 1.1rem;
+            color: var(--accent);
+        }
+
+        .social-actions {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid var(--card-border);
+            display: flex;
+            gap: 20px;
+            color: var(--text-muted);
+        }
+
+        .social-actions span {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.95rem;
+        }
+
+        .social-actions i {
+            font-size: 1.1rem;
+            transition: color 0.2s;
+        }
+
+        .social-actions span:hover i {
+            color: var(--primary);
+        }
+
+        .social-post {
+            padding: 25px;
+            border: 1px solid var(--card-border);
+        }
+    </style>
+    <!-- Verbesserte Scripts -->
+    <script>
+        // Lazy Loading
+        document.addEventListener('DOMContentLoaded', function() {
+            const lazyElements = document.querySelectorAll('.lazy-load');
+            
+            const lazyLoad = target => {
+                const io = new IntersectionObserver((entries, observer) => {
+                    entries.forEach(entry => {
+                        if (entry.isIntersecting) {
+                            const img = entry.target.querySelector('img');
+                            if (img && img.dataset.src) {
+                                img.src = img.dataset.src;
+                                img.removeAttribute('data-src');
+                            }
+                            entry.target.classList.add('loaded');
+                            observer.disconnect();
+                        }
+                    });
+                });
+
+                io.observe(target);
+            };
+
+            lazyElements.forEach(lazyLoad);
+        });
+
+        // Toast Benachrichtigungen
+        function showToast(message, type = 'info') {
+            const toast = document.createElement('div');
+            toast.className = `toast toast-${type}`;
+            toast.innerHTML = `
+                <i class="fas fa-${type === 'success' ? 'check-circle' : 'info-circle'}"></i>
+                <span>${message}</span>
+            `;
+            
+            document.querySelector('.toast-container').appendChild(toast);
+            
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        // Formularvalidierung
+        document.querySelectorAll('form').forEach(form => {
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                let isValid = true;
+                this.querySelectorAll('input, textarea').forEach(input => {
+                    if (!input.checkValidity()) {
+                        isValid = false;
+                        showInputError(input);
+                    } else {
+                        clearInputError(input);
+                    }
+                });
+
+                if (isValid) {
+                    showLoading();
+                    // Hier würde der API-Call erfolgen
+                    setTimeout(() => {
+                        hideLoading();
+                        showToast('Erfolgreich gesendet!', 'success');
+                        this.reset();
+                    }, 1000);
+                }
+            });
+        });
+
+        function showInputError(input) {
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'form-error';
+            errorDiv.textContent = input.validationMessage;
+            input.parentNode.appendChild(errorDiv);
+        }
+
+        function clearInputError(input) {
+            const errorDiv = input.parentNode.querySelector('.form-error');
+            if (errorDiv) errorDiv.remove();
+        }
+
+        // Loading Overlay
+        function showLoading() {
+            document.querySelector('.loading-overlay').style.display = 'flex';
+        }
+
+        function hideLoading() {
+            document.querySelector('.loading-overlay').style.display = 'none';
+        }
+
+        // Verbesserte Sprach-Umschaltung
+        function changeLanguage(lang) {
+            showLoading();
+            setTimeout(() => {
+                // Bestehende Sprach-Umschaltung-Logik hier
+                hideLoading();
+                showToast(
+                    lang === 'de' ? 'Sprache auf Deutsch geändert' : 'Language changed to English',
+                    'success'
+                );
+            }, 500);
+        }
+
+        // Echtzeit-Benachrichtigungen (Beispiel)
+        function initNotifications() {
+            // Hier würde die WebSocket-Verbindung aufgebaut
+            setInterval(() => {
+                // Simuliere neue Benachrichtigung
+                const count = Math.floor(Math.random() * 3);
+                updateNotificationBadge(count);
+            }, 30000);
+        }
+
+        function updateNotificationBadge(count) {
+            let badge = document.querySelector('.notification-badge');
+            if (count > 0) {
+                if (!badge) {
+                    badge = document.createElement('div');
+                    badge.className = 'notification-badge';
+                    document.querySelector('.navbar-cta').appendChild(badge);
+                }
+                badge.textContent = count;
+            } else if (badge) {
+                badge.remove();
+            }
+        }
+
+        // Initialize
+        initNotifications();
     </script>
 </body>
 </html>
